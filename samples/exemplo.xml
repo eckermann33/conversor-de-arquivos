@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<catalogo atualizado="2026-08-02">
+  <produto id="1">
+    <nome>Teclado mecânico</nome>
+    <preco moeda="BRL">349.90</preco>
+    <estoque>12</estoque>
+  </produto>
+  <produto id="2">
+    <nome>Monitor 27"</nome>
+    <preco moeda="BRL">1899.00</preco>
+    <estoque>3</estoque>
+  </produto>
+</catalogo>

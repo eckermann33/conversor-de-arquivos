@@ -1,0 +1,6 @@
+Este é um arquivo de texto simples.
+
+Serve para testar TXT -> PDF, TXT -> DOCX,
+contagem de palavras e mudança de caixa.
+
+Acentuação: ação, coração, avião, José.

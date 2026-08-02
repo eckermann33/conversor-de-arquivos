@@ -1,0 +1,23 @@
+[
+  {
+    "nome": "Silva, João",
+    "idade": 34,
+    "ativo": true,
+    "endereco": { "cidade": "São Paulo", "uf": "SP" },
+    "tags": ["cliente", "vip"]
+  },
+  {
+    "nome": "Maria Souza",
+    "idade": 28,
+    "ativo": true,
+    "endereco": { "cidade": "Rio de Janeiro", "uf": "RJ" },
+    "tags": ["cliente"]
+  },
+  {
+    "nome": "Pedro Alves",
+    "idade": 45,
+    "ativo": false,
+    "endereco": { "cidade": "Belo Horizonte", "uf": "MG" },
+    "tags": []
+  }
+]
