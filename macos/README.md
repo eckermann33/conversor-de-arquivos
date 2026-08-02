@@ -75,11 +75,18 @@ brew install xcodegen
 ./scripts/build-sem-xcode.sh --abrir
 ```
 
-**Direto no Xcode, sem scripts:** crie um novo projeto macOS App (SwiftUI,
-Swift, deployment target 13.0), apague o `ContentView.swift` e o
-`<Nome>App.swift` que o Xcode cria, arraste a pasta `ConvrtVideo/` para dentro do
-projeto e, em *Signing & Capabilities*, remova o **App Sandbox** — sem isso o app
-não consegue executar o ffmpeg.
+**Direto no Xcode, sem scripts:**
+
+1. novo projeto → macOS → App (SwiftUI, Swift, deployment target 13.0)
+2. apague o `ContentView.swift` e o `<Nome>App.swift` que o Xcode criou
+3. arraste a pasta `ConvrtVideo/` para o navegador do projeto e, na janela que
+   abre, marque **Create groups** (não "folder references") e **deixe o target
+   `ConvrtVideo` marcado** em *Add to targets* — é aqui que quase todo mundo
+   escorrega; sem o target marcado os arquivos não compilam e o Xcode reclama de
+   "Cannot find ... in scope"
+4. confira em *Build Phases → Compile Sources* que estão lá os 11 arquivos `.swift`
+5. em *Signing & Capabilities*, remova o **App Sandbox** — sem isso o app não
+   consegue executar o ffmpeg
 
 ## Como usar
 
@@ -123,6 +130,56 @@ app de executar binários de fora do bundle (o `ffmpeg` do Homebrew). Isso é
 aceitável para um app pessoal compilado por você. Se um dia quiser publicar na
 App Store, seria preciso embutir o ffmpeg no bundle e reativar a sandbox — e aí
 entra também a questão de licença GPL dos codecs.
+
+## Problemas comuns
+
+### "Cannot find 'ConversionQueue' in scope" (ou qualquer outro tipo do app)
+
+O código está certo — o que falta é o Xcode saber que os arquivos existem.
+Isso acontece quando a pasta `ConvrtVideo/` foi arrastada para um projeto novo
+sem marcar o target, ou entrou como *folder reference* (pasta azul) em vez de
+grupo (pasta amarela). Arquivo que não está no target não é compilado, então o
+`ConvrtVideoApp.swift` fica sozinho e não enxerga o resto.
+
+**Como conferir:** projeto → target `ConvrtVideo` → aba **Build Phases** →
+**Compile Sources**. Precisa ter os 11 arquivos:
+
+```
+ConvrtVideoApp.swift
+Models/ConversionSettings.swift      Services/ConversionQueue.swift
+Models/MediaInfo.swift               Services/FFmpegLocator.swift
+Models/VideoJob.swift                Services/FFmpegRunner.swift
+Views/ContentView.swift              Views/PainelDeAjustes.swift
+Views/LinhaDoVideo.swift             Views/TelaDeInstalacao.swift
+```
+
+**Como resolver:**
+
+1. o jeito rápido de descobrir se é só isso — compile fora do Xcode:
+   `./scripts/build-sem-xcode.sh` acha os arquivos sozinho. Se compilar aqui,
+   o problema é mesmo a montagem do projeto.
+2. no projeto aberto: clique no **+** em *Compile Sources* e adicione os que
+   faltam; ou apague a referência da pasta e arraste de novo marcando
+   **Add to targets: ConvrtVideo** e **Create groups**.
+3. o jeito que não erra: `brew install xcodegen && ./scripts/build.sh --abrir`
+   — o `project.yml` já lista tudo e o projeto sai pronto.
+
+### "ffmpeg não encontrado" mesmo com o Homebrew instalado
+
+O app procura em `/opt/homebrew/bin`, `/usr/local/bin`, `/opt/local/bin` e
+`/usr/bin`. Se o seu está em outro lugar, use o botão *Escolher o arquivo
+ffmpeg…* na tela de instalação — o caminho fica salvo.
+
+### O app abre mas não converte nada / erro de permissão
+
+Confirme que o **App Sandbox** está desligado em *Signing & Capabilities*. Com a
+caixa de areia ligada o app não consegue executar o ffmpeg de fora do bundle.
+
+### "O app está danificado" ao abrir o .app compilado
+
+Assinatura ad-hoc: `codesign --force --deep --sign - build/ConvrtVideo.app`
+(os scripts já fazem isso, mas o Gatekeeper às vezes reclama na primeira vez —
+clique com o botão direito → Abrir).
 
 ## Estado deste código
 
