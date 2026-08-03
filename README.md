@@ -162,7 +162,13 @@ Em [`macos/`](macos/) existe um app nativo em SwiftUI que converte **MOD, TOD, M
 M2TS, AVI, VOB, MPG, WMV, 3GP, DV, RM, FLV, MOV** e outros para **MP4 (H.264/H.265)**,
 com desentrelaçamento, correção de proporção e presets prontos. Roda 100% offline.
 
-Instruções de build no [`macos/README.md`](macos/README.md).
+Instruções de build no [`macos/README.md`](macos/README.md). Se você nunca usou o
+Xcode, comece pelo [`macos/PASSO-A-PASSO.md`](macos/PASSO-A-PASSO.md) — é um guia
+do zero, só com Finder e Xcode, sem Terminal.
+
+**Atenção:** o app do Mac usa apenas os arquivos dentro de `macos/`. O
+`index.html`, o `assets/css/style.css` e as imagens da raiz são do app web e não
+entram no projeto do Xcode.
 
 ---
 

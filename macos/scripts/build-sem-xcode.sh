@@ -53,6 +53,11 @@ sed -e 's|\$(EXECUTABLE_NAME)|ConvrtVideo|g' \
     -e 's|\$(PRODUCT_BUNDLE_IDENTIFIER)|com.convrt.video|g' \
     ConvrtVideo/Resources/Info.plist > "$APP/Contents/Info.plist"
 
+# ícone do app
+if [[ -f "ConvrtVideo/Resources/AppIcon.icns" ]]; then
+  cp ConvrtVideo/Resources/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+fi
+
 # ffmpeg embutido, se você tiver rodado o fetch-ffmpeg.sh
 for binario in ffmpeg ffprobe; do
   if [[ -x "ConvrtVideo/Resources/$binario" ]]; then

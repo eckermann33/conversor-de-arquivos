@@ -3,7 +3,10 @@
 App nativo (SwiftUI) que converte vídeo de câmera antiga para MP4. Roda offline,
 não fala com servidor nenhum, e o arquivo original nunca é apagado.
 
-![sem screenshot ainda — o app abre com uma área de arrastar e soltar à esquerda e os ajustes à direita]
+> **Nunca usou Xcode?** Vá direto para o **[PASSO-A-PASSO.md](PASSO-A-PASSO.md)**:
+> guia do zero, com Finder e Xcode apenas, sem digitar nada no Terminal.
+
+<img src="ConvrtVideo/Resources/AppIcon-1024.png" width="120" alt="Ícone do CONVRT Vídeo">
 
 ## O que ele converte
 
@@ -117,7 +120,15 @@ ConvrtVideo/
     LinhaDoVideo.swift          linha da fila
     PainelDeAjustes.swift       painel lateral de opções
     TelaDeInstalacao.swift      tela que aparece quando falta o ffmpeg
+  Resources/
+    Info.plist                  identidade do app
+    ConvrtVideo.entitlements    permissões (sandbox desligada)
+    AppIcon.icns                ícone, usado pelos scripts de build
+    AppIcon-1024.png            mesma arte, para arrastar no Assets.xcassets
 ```
+
+O ícone é gerado por `scripts/gerar-icone.py` (precisa de Pillow) — mexa lá se
+quiser mudar o desenho.
 
 A lógica que decide *o que* o ffmpeg vai fazer está toda em
 `ConversionSettings.filtros(para:)` e `.argumentos(entrada:saida:info:)` — é lá que
