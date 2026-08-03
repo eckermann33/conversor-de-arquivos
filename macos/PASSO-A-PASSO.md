@@ -58,15 +58,77 @@ Para abrir o app web: dê dois cliques no `index.html`. Só isso.
 ## Passo 3 — Baixar o ffmpeg (o motor da conversão)
 
 O app não converte sozinho: ele usa um programa chamado **ffmpeg**, que é quem
-sabe abrir MOD, MTS, VOB e companhia.
+sabe abrir MOD, MTS, VOB e companhia. Ele não vem no Mac, então precisa baixar.
 
-1. Abra <https://evermeet.cx/ffmpeg/> no Safari
-2. Baixe o **ffmpeg** (botão de download da versão mais recente) e também o **ffprobe**
-3. Nos Downloads, dê dois cliques em cada `.zip` para descompactar
-4. Vão sobrar dois arquivos sem extensão: `ffmpeg` e `ffprobe`
-5. Arraste os dois para dentro da pasta `convrt/macos/ConvrtVideo/Resources/`
+O ffmpeg não é um app normal com instalador — é um **arquivo único, sem
+extensão**, que o nosso app chama por baixo dos panos. Por isso o processo é
+meio esquisito. Vamos com calma.
 
-Guarde onde eles estão — você vai precisar apontar para eles no passo 7.
+### 3.1 — Descubra qual é o seu Mac
+
+1. Clique no **🍎 (maçã)** no canto superior esquerdo
+2. **Sobre Este Mac**
+3. Olhe a linha **Chip** (ou **Processador**):
+   - diz **Apple M1 / M2 / M3 / M4** → seu Mac é **Apple Silicon**
+   - diz **Intel** → seu Mac é **Intel**
+
+Anote, porque muda qual arquivo baixar.
+
+### 3.2 — Baixe o ffmpeg e o ffprobe
+
+São **dois arquivos**: o `ffmpeg` (converte) e o `ffprobe` (lê as informações do
+vídeo). Baixe os dois.
+
+**Se seu Mac é Apple Silicon (M1/M2/M3/M4) — recomendado:**
+
+Abra <https://ffmpeg.martin-riedl.de/> no Safari. Na coluna **macOS**, seção
+**arm64**, baixe o **ffmpeg** e o **ffprobe** (botão "Download" de cada um).
+São builds nativas, mais rápidas.
+
+**Se seu Mac é Intel, ou se o site acima não abrir:**
+
+Clique nestes dois links, um de cada vez:
+
+- ffmpeg: <https://evermeet.cx/ffmpeg/getrelease/ffmpeg/zip>
+- ffprobe: <https://evermeet.cx/ffmpeg/getrelease/ffprobe/zip>
+
+O Safari baixa um `.zip` de cada. Essas versões são para Intel — funcionam
+também em Mac Apple Silicon, só que mais devagar (o macOS traduz na hora, e
+pode pedir para instalar o **Rosetta**; se pedir, aceite e espere terminar).
+
+> Se aparecer um arquivo `.7z` em vez de `.zip`, você pegou o link errado — o
+> macOS não abre `.7z` sozinho. Volte e use os links de `zip` acima.
+
+### 3.3 — Descompacte
+
+1. Abra a pasta **Transferências** (Downloads) no Finder
+2. Se o Safari já descompactou, você verá dois arquivos chamados **`ffmpeg`** e
+   **`ffprobe`**, sem extensão nenhuma, com ícone de folha em branco ou de
+   executável — é isso mesmo, não tem ícone bonito
+3. Se ainda estiverem como `.zip`, dê **dois cliques** em cada um
+
+Confira o tamanho: cada um tem entre 40 e 80 MB. Se estiver com poucos KB,
+o download falhou — baixe de novo.
+
+### 3.4 — Guarde num lugar fixo
+
+Os arquivos não podem ficar em Transferências, senão qualquer limpeza apaga e o
+app para de funcionar.
+
+1. No Finder, abra a pasta do projeto: `convrt` → `macos` → `ConvrtVideo` → **`Resources`**
+2. **Arraste** os dois arquivos (`ffmpeg` e `ffprobe`) para dentro dela
+
+Pode ser qualquer pasta, na verdade — só precisa ser uma que você não vá apagar.
+Uso a `Resources` porque deixa tudo do projeto junto.
+
+### 3.5 — O macOS vai reclamar (e isso é esperado)
+
+Como os arquivos vieram da internet e não são assinados pela Apple, o macOS
+bloqueia na primeira execução. Você **não precisa** resolver isso agora — o app
+te avisa na hora certa, no passo 7, com um botão que leva direto ao lugar.
+
+Se quiser adiantar: **Ajustes do Sistema → Privacidade e Segurança**, role até
+o fim, e se houver uma mensagem sobre o `ffmpeg` clique em **Abrir Mesmo Assim**.
 
 ---
 
@@ -162,12 +224,21 @@ Sem isso o app não consegue chamar o ffmpeg, e nada converte.
    - dica: se não estiver enxergando a pasta, aperte **⌘⇧G** e cole o caminho
 6. A bolinha lá embaixo fica **verde** e aparece a versão do ffmpeg
 
-Se o macOS reclamar que "não é possível verificar o desenvolvedor":
+**Se aparecer um aviso laranja no lugar da bolinha verde**, o app te diz o que
+houve. Os dois casos comuns:
 
-1. Abra **Ajustes do Sistema → Privacidade e Segurança**
-2. Role até o fim: vai ter uma mensagem sobre o `ffmpeg` bloqueado
-3. Clique em **Abrir Mesmo Assim** / **Allow Anyway**
+*"O macOS está bloqueando esse arquivo porque ele veio da internet"*
+1. Clique no botão **Abrir Ajustes do Sistema** que aparece junto do aviso
+2. Em **Privacidade e Segurança**, role até o fim
+3. Clique em **Abrir Mesmo Assim** na mensagem sobre o `ffmpeg`
 4. Volte no app e clique em **Verificar de novo**
+
+*"Esse arquivo não roda neste Mac"*
+→ Você baixou a versão da arquitetura errada. Volte ao passo 3.1 e confira se
+seu Mac é Apple Silicon ou Intel.
+
+O app corrige sozinho a permissão de execução do arquivo, então esse problema
+você não vai ver.
 
 ---
 
@@ -207,7 +278,8 @@ o Terminal, e aqui está a alternativa de cada um:
 | Situação | Alternativa sem Terminal |
 | --- | --- |
 | Instalar o ffmpeg com `brew install` | Baixar o executável pronto do evermeet.cx (passo 3) e apontar pelo botão do app |
-| macOS bloqueia o ffmpeg baixado | Ajustes do Sistema → Privacidade e Segurança → **Abrir Mesmo Assim** |
+| macOS bloqueia o ffmpeg baixado | Botão **Abrir Ajustes do Sistema** dentro do próprio app → **Abrir Mesmo Assim** |
+| `chmod +x` para dar permissão ao ffmpeg | O app faz isso sozinho quando você escolhe o arquivo |
 | Baixar o projeto com `git clone` | Link do ZIP no passo 2 |
 
 ---

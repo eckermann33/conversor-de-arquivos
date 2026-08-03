@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import AppKit
 
 /// Estado da tela: fila de arquivos, ajustes e execução (um vídeo por vez,
 /// porque o ffmpeg já usa todos os núcleos do processador).
@@ -12,6 +13,8 @@ final class ConversionQueue: ObservableObject {
     @Published var ffmpegDisponivel = false
     @Published var versaoFFmpeg: String?
     @Published var aviso: String?
+    /// Explicação de por que o ffmpeg escolhido não funcionou (nil = tudo certo).
+    @Published var problemaFFmpeg: String?
 
     private let executor = FFmpegRunner()
     private var pararTudo = false
@@ -38,9 +41,10 @@ final class ConversionQueue: ObservableObject {
     // MARK: - ffmpeg
 
     func verificarFFmpeg() {
-        if let url = FFmpegLocator.localizar("ffmpeg") {
+        if let url = FFmpegLocator.localizar("ffmpeg"), let versao = FFmpegLocator.versao(de: url) {
             ffmpegDisponivel = true
-            versaoFFmpeg = FFmpegLocator.versao(de: url)
+            versaoFFmpeg = versao
+            problemaFFmpeg = nil
         } else {
             ffmpegDisponivel = false
             versaoFFmpeg = nil
@@ -49,9 +53,22 @@ final class ConversionQueue: ObservableObject {
 
     func usarFFmpegEm(_ url: URL) {
         FFmpegLocator.registrarEscolha(url)
+        problemaFFmpeg = FFmpegLocator.diagnosticar(url)
         verificarFFmpeg()
-        if !ffmpegDisponivel {
-            aviso = "Esse arquivo não parece ser o ffmpeg."
+        if problemaFFmpeg == nil && !ffmpegDisponivel {
+            problemaFFmpeg = "Esse arquivo não parece ser o ffmpeg."
+        }
+    }
+
+    /// Abre o painel de Privacidade e Segurança, onde fica o botão
+    /// "Abrir Mesmo Assim" para liberar um programa baixado da internet.
+    func abrirAjustesDeSeguranca() {
+        let enderecos = [
+            "x-apple.systempreferences:com.apple.settings.PrivacyAndSecurity",
+            "x-apple.systempreferences:com.apple.preference.security"
+        ]
+        for endereco in enderecos {
+            if let url = URL(string: endereco), NSWorkspace.shared.open(url) { return }
         }
     }
 

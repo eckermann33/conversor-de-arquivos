@@ -49,12 +49,32 @@ struct TelaDeInstalacao: View {
                     .foregroundStyle(.secondary)
             }
 
-            opcao(numero: "2", titulo: "Já tenho o ffmpeg em outro lugar") {
+            opcao(numero: "2", titulo: "Já baixei o ffmpeg (evermeet.cx, Downloads…)") {
                 Button("Escolher o arquivo ffmpeg…") {
                     SelecionadorDeArquivos.escolherExecutavel { url in
                         fila.usarFFmpegEm(url)
                         if fila.ffmpegDisponivel { fechar() }
                     }
+                }
+
+                if let problema = fila.problemaFFmpeg {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label(problema, systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        if problema.contains("Privacidade") {
+                            Button("Abrir Ajustes do Sistema") {
+                                fila.abrirAjustesDeSeguranca()
+                            }
+                            .controlSize(.small)
+                        }
+                    }
+                    .padding(10)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.orange.opacity(0.12))
+                    .cornerRadius(6)
                 }
             }
 

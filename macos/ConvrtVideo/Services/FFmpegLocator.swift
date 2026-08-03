@@ -39,15 +39,57 @@ enum FFmpegLocator {
     static func registrarEscolha(_ url: URL) {
         let nome = url.lastPathComponent
         let chave = nome.contains("probe") ? chaveFFprobe : chaveFFmpeg
+
+        tornarExecutavel(url)
         UserDefaults.standard.set(url.path, forKey: chave)
 
         // Se o usuário apontou o ffmpeg, o ffprobe quase sempre está do lado.
         let vizinho = url.deletingLastPathComponent()
             .appendingPathComponent(nome.contains("probe") ? "ffmpeg" : "ffprobe")
+        tornarExecutavel(vizinho)
         if executavel(vizinho.path) {
             UserDefaults.standard.set(vizinho.path,
                                       forKey: chave == chaveFFmpeg ? chaveFFprobe : chaveFFmpeg)
         }
+    }
+
+    /// Descompactar pelo Finder às vezes tira a permissão de execução do
+    /// arquivo. Como o usuário escolheu esse arquivo a dedo, devolvemos a
+    /// permissão em vez de mandar ele abrir o Terminal para dar um chmod.
+    static func tornarExecutavel(_ url: URL) {
+        let gerenciador = FileManager.default
+        guard gerenciador.fileExists(atPath: url.path),
+              !gerenciador.isExecutableFile(atPath: url.path) else { return }
+        try? gerenciador.setAttributes([.posixPermissions: 0o755], ofItemAtPath: url.path)
+    }
+
+    /// O macOS carimba todo arquivo baixado da internet com "quarentena".
+    /// Enquanto ela estiver lá, o sistema recusa executar o binário — e o erro
+    /// que aparece não explica isso, então detectamos para poder avisar direito.
+    static func estaEmQuarentena(_ url: URL) -> Bool {
+        getxattr(url.path, "com.apple.quarantine", nil, 0, 0, 0) > 0
+    }
+
+    /// Confere se o ffmpeg escolhido realmente executa neste Mac.
+    /// Devolve nil quando está tudo certo, ou uma explicação do problema.
+    static func diagnosticar(_ url: URL) -> String? {
+        if !FileManager.default.fileExists(atPath: url.path) {
+            return "Esse arquivo não existe mais no lugar onde estava."
+        }
+        if !FileManager.default.isExecutableFile(atPath: url.path) {
+            return "Esse arquivo não tem permissão de execução e não consegui corrigir sozinho."
+        }
+        if versao(de: url) == nil {
+            if estaEmQuarentena(url) {
+                return "O macOS está bloqueando esse arquivo porque ele veio da internet. "
+                    + "Abra Ajustes do Sistema → Privacidade e Segurança, role até o fim e "
+                    + "clique em \"Abrir Mesmo Assim\" na mensagem sobre o ffmpeg. Depois volte "
+                    + "aqui e clique em Verificar de novo."
+            }
+            return "Esse arquivo não roda neste Mac. Ele pode ser de outra arquitetura "
+                + "(Intel × Apple Silicon) ou não ser o ffmpeg."
+        }
+        return nil
     }
 
     /// Versão do ffmpeg, para mostrar na barra de status.
