@@ -203,7 +203,7 @@ Contando, têm que ser **11 arquivos `.swift`** no total.
 
 ---
 
-## Passo 6 — Duas configurações obrigatórias
+## Passo 6 — Configurações obrigatórias
 
 **6a. Desligar a caixa de areia (App Sandbox)**
 
@@ -222,6 +222,27 @@ Sem isso o app não consegue chamar o ffmpeg, e nada converte.
 3. No Finder, abra `convrt/macos/ConvrtVideo/Resources/`
 4. Arraste o arquivo **`AppIcon-1024.png`** para o quadrado maior (1024) que
    apareceu no Xcode
+
+**6c. Se você está no Xcode 26 (beta ou versão final) — obrigatório**
+
+O Xcode 26 passou a marcar projetos novos com isolamento automático na thread
+principal ("Default Actor Isolation: MainActor"). Este app controla as threads
+na mão — manda o ffmpeg rodar em segundo plano e só atualiza a tela depois —
+então essa configuração nova pode dar erro de compilação mencionando "actor",
+tipo `Main actor-isolated property ... can not be referenced from a
+non-isolated context`.
+
+Para desligar:
+
+1. Com o target **ConvrtVideo** ainda selecionado, abra a aba **Build Settings**
+   (do lado de **Signing & Capabilities**)
+2. No campo de busca no topo dessa aba, digite **Default Actor Isolation**
+3. Vai aparecer uma linha com o valor **MainActor** — clique nele e troque
+   para **Nonisolated**
+4. Busque também por **Approachable Concurrency**; se aparecer, deixe em **No**
+
+Se essas opções não existirem na sua versão do Xcode, sem problema — é sinal
+de que você não precisa desse ajuste.
 
 ---
 
@@ -307,6 +328,11 @@ faltar, clique no **+** e adicione.
 **O app abre mas o botão "Converter tudo" fica apagado**
 → Ou não tem vídeo na fila, ou o ffmpeg não foi encontrado (bolinha laranja
 embaixo). Refaça o passo 7.
+
+**Erro de compilação citando "actor" ou "MainActor"**
+→ Você está no Xcode 26 e pulou o passo 6c. Vá em **Build Settings** do target,
+busque **Default Actor Isolation** e troque de **MainActor** para
+**Nonisolated**.
 
 **"O ffmpeg terminou com erro"** em um vídeo específico
 → Tente o preset **Compatibilidade máxima**. Se continuar, o arquivo pode estar

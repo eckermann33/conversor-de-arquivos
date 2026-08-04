@@ -19,6 +19,16 @@ settings:
     ENABLE_HARDENED_RUNTIME: NO
     DEAD_CODE_STRIPPING: YES
     SWIFT_TREAT_WARNINGS_AS_ERRORS: NO
+    # Xcode 26 passou a marcar projetos novos com isolamento padrão na
+    # main actor ("Approachable Concurrency"). Este app gerencia threads
+    # na mão (DispatchQueue.global para o ffmpeg, .main para atualizar a
+    # UI), então fixamos o comportamento antigo para não depender de
+    # inferência de concorrência que não foi revisada para o Swift 6.
+    # Configurações desconhecidas em versões mais antigas do Xcode são
+    # ignoradas sem erro, então isso é seguro em qualquer versão.
+    SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated
+    SWIFT_APPROACHABLE_CONCURRENCY: NO
+    SWIFT_STRICT_CONCURRENCY: minimal
 
 targets:
   ConvrtVideo:

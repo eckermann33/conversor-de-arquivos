@@ -5,6 +5,10 @@ não fala com servidor nenhum, e o arquivo original nunca é apagado.
 
 > **Nunca usou Xcode?** Vá direto para o **[PASSO-A-PASSO.md](PASSO-A-PASSO.md)**:
 > guia do zero, com Finder e Xcode apenas, sem digitar nada no Terminal.
+>
+> **No Xcode 26 (beta ou não)?** Tem um passo extra obrigatório sobre isolamento
+> de concorrência — é o passo 6c do guia acima, ou veja "Problemas comuns" logo
+> abaixo se já estiver com erro de compilação citando "actor".
 
 <img src="ConvrtVideo/Resources/AppIcon-1024.png" width="120" alt="Ícone do CONVRT Vídeo">
 
@@ -185,6 +189,24 @@ ffmpeg…* na tela de instalação — o caminho fica salvo.
 
 Confirme que o **App Sandbox** está desligado em *Signing & Capabilities*. Com a
 caixa de areia ligada o app não consegue executar o ffmpeg de fora do bundle.
+
+### Erro de compilação citando "actor" ou "MainActor" (Xcode 26+)
+
+O Xcode 26 passa a marcar projetos novos com **Default Actor Isolation:
+MainActor**, que trata toda classe como presa à thread principal por padrão.
+Este app gerencia threads na mão (`DispatchQueue.global` para o ffmpeg,
+`DispatchQueue.main` para atualizar a tela) e não foi auditado para esse modo.
+
+**Se você montou o projeto pelo assistente do Xcode:** target → **Build
+Settings** → busque **Default Actor Isolation** → troque de **MainActor**
+para **Nonisolated**. Busque também **Approachable Concurrency** e deixe em
+**No**, se existir.
+
+**Se você usa `./scripts/build.sh` (XcodeGen):** já está resolvido — o
+`project.yml` fixa `SWIFT_DEFAULT_ACTOR_ISOLATION: nonisolated`.
+
+**Se você usa `./scripts/build-sem-xcode.sh`:** também já está resolvido, via
+`-swift-version 5` explícito no `swiftc`.
 
 ### "O app está danificado" ao abrir o .app compilado
 

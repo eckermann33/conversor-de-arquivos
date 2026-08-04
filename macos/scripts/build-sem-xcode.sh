@@ -29,9 +29,13 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 compilar() {
   local alvo="$1" destino="$2"
   echo "→ compilando para $alvo"
+  # -swift-version 5 fixa o modo de linguagem: toolchains novas (Xcode 26+)
+  # podem mudar padrões de concorrência entre versões, e este código gerencia
+  # threads na mão (DispatchQueue) sem ter sido auditado para Swift 6.
   swiftc \
     -O \
     -parse-as-library \
+    -swift-version 5 \
     -target "$alvo" \
     -sdk "$(xcrun --show-sdk-path --sdk macosx)" \
     -framework SwiftUI -framework AppKit -framework Foundation \
