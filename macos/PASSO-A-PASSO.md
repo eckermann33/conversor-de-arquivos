@@ -148,6 +148,11 @@ o fim, e se houver uma mensagem sobre o `ffmpeg` clique em **Abrir Mesmo Assim**
    - deixe desmarcado "Include Tests"
 5. **Next**, escolha salvar na **Mesa**, e **Create**
 
+> Deu outro nome ao projeto? Tudo bem, funciona igual — só lembre que daí em
+> diante, onde este guia disser `ConvrtVideo`, leia o nome que você usou. O app
+> vai aparecer com esse nome no Dock; para trocar depois, é a aba **General** do
+> target, campo **Display Name**.
+
 O Xcode abre o projeto com uma janela cheia de painéis. A coluna da esquerda é
 o **navegador de arquivos** — é com ela que vamos trabalhar.
 
@@ -160,8 +165,15 @@ O Xcode criou dois arquivos de exemplo. Vamos apagar e colocar os nossos.
 **5a. Apagar os de exemplo**
 
 1. Na coluna da esquerda, clique em **`ContentView.swift`**
-2. Segure **⌘** e clique também em **`ConvrtVideoApp.swift`**
+2. Segure **⌘** e clique também no arquivo terminado em **`App.swift`**
 3. Aperte **Delete** e escolha **Move to Trash**
+
+> **Se você deu outro nome ao projeto** (`myapp`, por exemplo), o segundo arquivo
+> se chama `myappApp.swift`. Apague esse mesmo. Não tem problema o projeto ter
+> outro nome — só não pule esta parte: se sobrar o arquivo do Xcode junto com o
+> nosso, a compilação falha com `'main' attribute can only apply to one type in
+> a module` (dois arquivos disputando ser o início do app) ou
+> `Invalid redeclaration of 'ContentView'` (duas telas com o mesmo nome).
 
 **5b. Trazer os nossos**
 
@@ -177,7 +189,8 @@ O Xcode criou dois arquivos de exemplo. Vamos apagar e colocar os nossos.
    se passar batido**:
    - ☑️ **Copy items if needed** — marcado
    - 🔘 **Create groups** — selecionado (e *não* "Create folder references")
-   - ☑️ **ConvrtVideo** em **Add to targets** — marcado
+   - ☑️ o **target** em **Add to targets** — marcado. Ele tem o nome que você
+     deu ao projeto no passo 4: se você chamou de `myapp`, marque `myapp`
 5. Clique em **Finish**
 
 **5c. Conferir que deu certo**
