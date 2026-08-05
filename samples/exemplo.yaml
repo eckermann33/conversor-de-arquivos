@@ -1,0 +1,16 @@
+servico: convrt
+versao: 2
+offline: true
+formatos:
+  documentos:
+    - pdf
+    - docx
+    - md
+  dados:
+    - csv
+    - json
+    - yaml
+    - xlsx
+limites:
+  tamanho_maximo: null
+  envia_para_servidor: false

@@ -1,0 +1,14 @@
+{
+  "name": "CONVRT — Conversor de Arquivos",
+  "short_name": "CONVRT",
+  "description": "Converte PDF, imagens, CSV, JSON, YAML, XLSX, Markdown e legendas direto no navegador.",
+  "lang": "pt-BR",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    { "src": "assets/icons/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

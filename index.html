@@ -1,1067 +1,124 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>CONVRT — Conversor de Arquivos</title>
+<title>CONVRT — Conversor de Arquivos no Browser</title>
+<meta name="description" content="Converte PDF, imagens, CSV, JSON, YAML, XLSX, Markdown e legendas direto no navegador. Nenhum arquivo é enviado para servidor." />
+<meta name="color-scheme" content="dark light" />
+<meta name="theme-color" content="#0a0a0a" />
+<link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
+<link rel="manifest" href="manifest.webmanifest" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<style>
-  :root {
-    --bg: #0a0a0a;
-    --surface: #111111;
-    --border: #2a2a2a;
-    --accent: #e8ff47;
-    --accent2: #ff5733;
-    --text: #f0f0f0;
-    --muted: #666;
-    --mono: 'Space Mono', monospace;
-    --sans: 'Syne', sans-serif;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* GRID DE FUNDO */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(232,255,71,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(232,255,71,0.03) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .wrap {
-    position: relative;
-    z-index: 1;
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 40px 20px 80px;
-  }
-
-  /* HEADER */
-  header {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 20px;
-    margin-bottom: 48px;
-  }
-
-  .logo {
-    font-family: var(--sans);
-    font-weight: 800;
-    font-size: clamp(2.4rem, 8vw, 4rem);
-    letter-spacing: -2px;
-    line-height: 1;
-    color: var(--accent);
-  }
-
-  .logo span {
-    color: var(--accent2);
-  }
-
-  .tagline {
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    text-align: right;
-    line-height: 1.6;
-  }
-
-  /* CONVERSÕES GRID */
-  .section-label {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 16px;
-  }
-
-  .converters-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 2px;
-    margin-bottom: 40px;
-  }
-
-  .conv-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 20px;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .conv-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0;
-    width: 3px;
-    height: 100%;
-    background: var(--accent);
-    transform: scaleY(0);
-    transition: transform 0.2s ease;
-    transform-origin: bottom;
-  }
-
-  .conv-card:hover::before,
-  .conv-card.active::before {
-    transform: scaleY(1);
-  }
-
-  .conv-card:hover,
-  .conv-card.active {
-    border-color: var(--accent);
-    background: #161616;
-  }
-
-  .conv-card.active {
-    background: #141a00;
-  }
-
-  .conv-from-to {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 8px;
-  }
-
-  .badge {
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    font-weight: 700;
-    padding: 3px 8px;
-    border-radius: 2px;
-    text-transform: uppercase;
-  }
-
-  .badge-from { background: #222; color: var(--muted); border: 1px solid #333; }
-  .badge-to   { background: var(--accent); color: #000; }
-
-  .arrow-icon {
-    font-size: 0.9rem;
-    color: var(--muted);
-  }
-
-  .conv-desc {
-    font-size: 0.78rem;
-    color: var(--muted);
-    line-height: 1.4;
-    font-family: var(--mono);
-  }
-
-  /* ÁREA DE TRABALHO */
-  .workspace {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 32px;
-    display: none;
-    animation: slideIn 0.2s ease;
-  }
-
-  .workspace.visible { display: block; }
-
-  @keyframes slideIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .workspace-title {
-    font-size: 1rem;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .workspace-title .dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--accent);
-    display: inline-block;
-  }
-
-  /* DROP ZONE */
-  .dropzone {
-    border: 2px dashed var(--border);
-    padding: 48px 24px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    position: relative;
-  }
-
-  .dropzone:hover,
-  .dropzone.drag-over {
-    border-color: var(--accent);
-    background: rgba(232,255,71,0.03);
-  }
-
-  .dropzone input[type="file"] {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-    width: 100%;
-    height: 100%;
-  }
-
-  .dropzone-icon {
-    font-size: 2.5rem;
-    margin-bottom: 12px;
-    display: block;
-  }
-
-  .dropzone-text {
-    font-family: var(--mono);
-    font-size: 0.8rem;
-    color: var(--muted);
-    line-height: 1.6;
-  }
-
-  .dropzone-text strong {
-    color: var(--accent);
-    display: block;
-    font-size: 0.95rem;
-    margin-bottom: 4px;
-  }
-
-  /* ARQUIVO SELECIONADO */
-  .file-info {
-    display: none;
-    align-items: center;
-    gap: 12px;
-    padding: 12px 16px;
-    background: #0d0d0d;
-    border: 1px solid var(--border);
-    margin-top: 12px;
-    font-family: var(--mono);
-    font-size: 0.75rem;
-  }
-
-  .file-info.visible { display: flex; }
-
-  .file-icon { font-size: 1.2rem; }
-  .file-name { flex: 1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .file-size { color: var(--muted); }
-
-  /* OPÇÕES */
-  .options-row {
-    margin-top: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .opt-label {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 6px;
-    display: block;
-  }
-
-  .opt-select, .opt-input {
-    background: #0d0d0d;
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 0.8rem;
-    padding: 8px 12px;
-    width: 100%;
-    outline: none;
-    border-radius: 0;
-    appearance: none;
-  }
-
-  .opt-select:focus, .opt-input:focus {
-    border-color: var(--accent);
-  }
-
-  /* BTN */
-  .btn-convert {
-    margin-top: 24px;
-    background: var(--accent);
-    color: #000;
-    border: none;
-    padding: 14px 32px;
-    font-family: var(--sans);
-    font-weight: 700;
-    font-size: 0.9rem;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-    width: 100%;
-    transition: all 0.15s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .btn-convert:hover {
-    background: #fff;
-    transform: translateY(-1px);
-  }
-
-  .btn-convert:active { transform: translateY(0); }
-
-  .btn-convert:disabled {
-    background: var(--border);
-    color: var(--muted);
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  /* PROGRESS */
-  .progress-bar {
-    height: 2px;
-    background: var(--border);
-    margin-top: 16px;
-    overflow: hidden;
-    display: none;
-  }
-
-  .progress-bar.visible { display: block; }
-
-  .progress-fill {
-    height: 100%;
-    background: var(--accent);
-    width: 0%;
-    transition: width 0.3s ease;
-  }
-
-  /* RESULTADO */
-  .result-box {
-    margin-top: 20px;
-    display: none;
-  }
-
-  .result-box.visible { display: block; }
-
-  .result-header {
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    margin-bottom: 10px;
-  }
-
-  .result-preview {
-    background: #060606;
-    border: 1px solid var(--border);
-    padding: 16px;
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    color: var(--muted);
-    max-height: 200px;
-    overflow-y: auto;
-    white-space: pre-wrap;
-    word-break: break-all;
-    line-height: 1.6;
-  }
-
-  .btn-download {
-    margin-top: 12px;
-    background: transparent;
-    color: var(--accent);
-    border: 1px solid var(--accent);
-    padding: 12px 24px;
-    font-family: var(--mono);
-    font-weight: 700;
-    font-size: 0.8rem;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-    width: 100%;
-    transition: all 0.15s ease;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .btn-download:hover {
-    background: var(--accent);
-    color: #000;
-  }
-
-  /* TOAST */
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: var(--accent);
-    color: #000;
-    font-family: var(--mono);
-    font-size: 0.75rem;
-    font-weight: 700;
-    padding: 12px 20px;
-    transform: translateY(80px);
-    opacity: 0;
-    transition: all 0.3s ease;
-    z-index: 999;
-    letter-spacing: 1px;
-  }
-
-  .toast.show {
-    transform: translateY(0);
-    opacity: 1;
-  }
-
-  .toast.error {
-    background: var(--accent2);
-    color: #fff;
-  }
-
-  /* FOOTER */
-  footer {
-    margin-top: 60px;
-    border-top: 1px solid var(--border);
-    padding-top: 20px;
-    font-family: var(--mono);
-    font-size: 0.65rem;
-    color: var(--muted);
-    display: flex;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  /* SCROLL */
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: var(--border); }
-</style>
+<link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
+
+<a class="skip-link" href="#workspace">Pular para a área de conversão</a>
 
 <div class="wrap">
 
   <header>
-    <div class="logo">CONV<span>R</span>T</div>
-    <div class="tagline">Conversor de arquivos<br/>100% no seu browser</div>
+    <div class="brand">
+      <h1 class="logo">CONV<span>R</span>T</h1>
+      <p class="tagline">
+        conversor de arquivos<br />
+        <strong>100% no seu browser</strong>
+      </p>
+    </div>
+    <button id="theme-toggle" class="chip theme-toggle" type="button">◑ claro</button>
   </header>
 
+  <section class="intro">
+    <p>
+      Nada sai do seu computador: todo processamento acontece nesta aba.
+      <span id="total-converters">0</span> conversões disponíveis.
+    </p>
+    <div class="search-row">
+      <input id="search" class="search" type="search" placeholder="buscar conversão…  (tecla / )"
+             aria-label="Buscar conversão" autocomplete="off" />
+      <span id="count" class="count"></span>
+    </div>
+    <div id="filters" class="filters" role="group" aria-label="Filtrar por categoria"></div>
+    <div id="history" class="history" hidden></div>
+  </section>
+
   <p class="section-label">// selecione uma conversão</p>
+  <div id="grid" class="converters-grid"></div>
 
-  <div class="converters-grid" id="grid">
-
-    <div class="conv-card" data-id="txt2pdf">
-      <div class="conv-from-to">
-        <span class="badge badge-from">TXT</span>
-        <span class="arrow-icon">→</span>
-        <span class="badge badge-to">PDF</span>
+  <!-- ÁREA DE TRABALHO -->
+  <section id="workspace" class="workspace" hidden aria-live="polite">
+    <div class="workspace-head">
+      <div>
+        <h2 class="workspace-title"><span class="dot"></span><span id="ws-title">Conversão</span></h2>
+        <p id="ws-desc" class="workspace-desc"></p>
       </div>
-      <p class="conv-desc">Texto simples para PDF com formatação básica</p>
+      <span id="ws-cat" class="chip chip-static"></span>
     </div>
 
-    <div class="conv-card" data-id="img2pdf">
-      <div class="conv-from-to">
-        <span class="badge badge-from">IMG</span>
-        <span class="arrow-icon">→</span>
-        <span class="badge badge-to">PDF</span>
+    <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Selecionar arquivos">
+      <input type="file" id="file-input" hidden />
+      <span class="dropzone-icon" aria-hidden="true">📂</span>
+      <span class="dropzone-strong">clique ou arraste os arquivos aqui</span>
+      <span id="accept-hint" class="dropzone-hint"></span>
+      <span id="batch-hint" class="dropzone-badge" hidden>aceita vários arquivos de uma vez</span>
+    </div>
+
+    <div id="files" class="files" hidden></div>
+    <button id="btn-clear-files" class="btn btn-ghost btn-small" type="button">limpar fila</button>
+
+    <div id="options" class="options" hidden></div>
+
+    <button id="btn-convert" class="btn btn-primary" type="button" disabled>⚙ converter</button>
+    <p class="hint">dica: <kbd>Ctrl</kbd>/<kbd>⌘</kbd> + <kbd>Enter</kbd> converte sem tirar a mão do teclado</p>
+
+    <div id="progress" class="progress" hidden><div id="progress-fill" class="progress-fill"></div></div>
+
+    <div id="results" class="results" hidden>
+      <div class="results-head">
+        <p class="section-label">// resultado <span id="results-summary" class="results-summary"></span></p>
+        <button id="btn-zip" class="btn btn-ghost btn-small" type="button" hidden>🗜️ baixar tudo (.zip)</button>
       </div>
-      <p class="conv-desc">JPG, PNG ou WEBP em um arquivo PDF</p>
+      <div id="results-list" class="results-list"></div>
     </div>
+  </section>
 
-    <div class="conv-card" data-id="pdf2txt">
-      <div class="conv-from-to">
-        <span class="badge badge-from">PDF</span>
-        <span class="arrow-icon">→</span>
-        <span class="badge badge-to">TXT</span>
+  <section class="about">
+    <h2 class="section-label">// como funciona</h2>
+    <div class="about-grid">
+      <div>
+        <h3>Privado por construção</h3>
+        <p>Os arquivos são lidos pela API <code>File</code> e processados em memória. Não existe upload nem servidor.</p>
       </div>
-      <p class="conv-desc">Extrai o texto de arquivos PDF</p>
-    </div>
-
-    <div class="conv-card" data-id="json2csv">
-      <div class="conv-from-to">
-        <span class="badge badge-from">JSON</span>
-        <span class="arrow-icon">→</span>
-        <span class="badge badge-to">CSV</span>
+      <div>
+        <h3>Funciona offline</h3>
+        <p>Depois da primeira visita, o service worker guarda o app em cache. As bibliotecas pesadas só baixam quando a conversão precisa delas.</p>
       </div>
-      <p class="conv-desc">Array JSON para tabela CSV</p>
-    </div>
-
-    <div class="conv-card" data-id="csv2json">
-      <div class="conv-from-to">
-        <span class="badge badge-from">CSV</span>
-        <span class="arrow-icon">→</span>
-        <span class="badge badge-to">JSON</span>
+      <div>
+        <h3>Em lote</h3>
+        <p>Conversões marcadas com <span class="tag-multi">lote</span> aceitam vários arquivos e entregam tudo junto num .zip.</p>
       </div>
-      <p class="conv-desc">Tabela CSV para array JSON</p>
-    </div>
-
-    <div class="conv-card" data-id="md2html">
-      <div class="conv-from-to">
-        <span class="badge badge-from">MD</span>
-        <span class="arrow-icon">→</span>
-        <span class="badge badge-to">HTML</span>
-      </div>
-      <p class="conv-desc">Markdown para HTML com estilos</p>
-    </div>
-
-    <div class="conv-card" data-id="html2txt">
-      <div class="conv-from-to">
-        <span class="badge badge-from">HTML</span>
-        <span class="arrow-icon">→</span>
-        <span class="badge badge-to">TXT</span>
-      </div>
-      <p class="conv-desc">Remove tags HTML e extrai só o texto</p>
-    </div>
-
-    <div class="conv-card" data-id="img2base64">
-      <div class="conv-from-to">
-        <span class="badge badge-from">IMG</span>
-        <span class="arrow-icon">→</span>
-        <span class="badge badge-to">B64</span>
-      </div>
-      <p class="conv-desc">Converte imagem para string Base64</p>
-    </div>
-
-  </div>
-
-  <!-- WORKSPACE -->
-  <div class="workspace" id="workspace">
-    <div class="workspace-title">
-      <span class="dot"></span>
-      <span id="ws-title">Conversão</span>
-    </div>
-
-    <div class="dropzone" id="dropzone">
-      <input type="file" id="file-input" />
-      <span class="dropzone-icon">📂</span>
-      <div class="dropzone-text">
-        <strong>Clique ou arraste o arquivo aqui</strong>
-        <span id="accept-hint">Formatos aceitos aparecerão aqui</span>
+      <div>
+        <h3>Vídeo é outro caso</h3>
+        <p>Converter vídeo antigo (MOD, MTS, AVI, VOB…) no browser é lento e limitado. Para isso existe o app nativo de macOS em <code>macos/</code>.</p>
       </div>
     </div>
-
-    <div class="file-info" id="file-info">
-      <span class="file-icon" id="fi-icon">📄</span>
-      <span class="file-name" id="fi-name">—</span>
-      <span class="file-size" id="fi-size">—</span>
-    </div>
-
-    <div class="options-row" id="options-row"></div>
-
-    <button class="btn-convert" id="btn-convert" disabled>
-      <span>⚙</span> Converter
-    </button>
-
-    <div class="progress-bar" id="progress-bar">
-      <div class="progress-fill" id="progress-fill"></div>
-    </div>
-
-    <div class="result-box" id="result-box">
-      <p class="result-header">// prévia do resultado</p>
-      <div class="result-preview" id="result-preview"></div>
-      <a class="btn-download" id="btn-download" href="#" download>
-        ↓ Baixar arquivo convertido
-      </a>
-    </div>
-
-  </div>
+  </section>
 
   <footer>
-    <span>CONVRT v1.0 — tudo roda no browser, nenhum arquivo é enviado</span>
-    <span>made with &lt;3</span>
+    <span>CONVRT v2 — nenhum arquivo é enviado para lugar nenhum</span>
+    <span>© <span id="year">2026</span> · <a href="https://github.com/eckermann33/conversor-de-arquivos">código no GitHub</a></span>
   </footer>
 
 </div>
 
-<div class="toast" id="toast"></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<!-- jsPDF para gerar PDFs -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-<script>
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-  'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-// ── estado global ──────────────────────────────────────
-let currentConv = null;
-let selectedFile = null;
-
-const configs = {
-  txt2pdf: {
-    title: 'TXT → PDF',
-    accept: '.txt,text/plain',
-    hint: '.txt',
-    icon: '📝',
-    options: `
-      <div>
-        <span class="opt-label">// tamanho da fonte (px)</span>
-        <input class="opt-input" type="number" id="opt-fontsize" value="12" min="8" max="24" />
-      </div>
-      <div>
-        <span class="opt-label">// título do documento</span>
-        <input class="opt-input" type="text" id="opt-title" placeholder="Opcional" />
-      </div>
-    `
-  },
-  img2pdf: {
-    title: 'IMG → PDF',
-    accept: 'image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp',
-    hint: '.jpg / .png / .webp',
-    icon: '🖼️',
-    options: `
-      <div>
-        <span class="opt-label">// orientação</span>
-        <select class="opt-select" id="opt-orient">
-          <option value="auto">Automática</option>
-          <option value="p">Retrato (portrait)</option>
-          <option value="l">Paisagem (landscape)</option>
-        </select>
-      </div>
-    `
-  },
-  pdf2txt: {
-    title: 'PDF → TXT',
-    accept: '.pdf,application/pdf',
-    hint: '.pdf',
-    icon: '📑',
-    options: ''
-  },
-  json2csv: {
-    title: 'JSON → CSV',
-    accept: '.json,application/json',
-    hint: '.json (array de objetos)',
-    icon: '📊',
-    options: `
-      <div>
-        <span class="opt-label">// separador</span>
-        <select class="opt-select" id="opt-sep">
-          <option value=",">Vírgula (,)</option>
-          <option value=";">Ponto e vírgula (;)</option>
-          <option value="\t">Tab</option>
-        </select>
-      </div>
-    `
-  },
-  csv2json: {
-    title: 'CSV → JSON',
-    accept: '.csv,text/csv',
-    hint: '.csv',
-    icon: '📊',
-    options: `
-      <div>
-        <span class="opt-label">// separador</span>
-        <select class="opt-select" id="opt-sep">
-          <option value=",">Vírgula (,)</option>
-          <option value=";">Ponto e vírgula (;)</option>
-          <option value="\t">Tab</option>
-        </select>
-      </div>
-    `
-  },
-  md2html: {
-    title: 'Markdown → HTML',
-    accept: '.md,.markdown,text/markdown',
-    hint: '.md / .markdown',
-    icon: '📝',
-    options: `
-      <div>
-        <span class="opt-label">// incluir estilos CSS embutidos?</span>
-        <select class="opt-select" id="opt-styles">
-          <option value="yes">Sim (HTML completo com estilo)</option>
-          <option value="no">Não (só fragmento HTML)</option>
-        </select>
-      </div>
-    `
-  },
-  html2txt: {
-    title: 'HTML → TXT',
-    accept: '.html,.htm,text/html',
-    hint: '.html / .htm',
-    icon: '🌐',
-    options: ''
-  },
-  img2base64: {
-    title: 'Imagem → Base64',
-    accept: 'image/*',
-    hint: 'qualquer imagem',
-    icon: '🖼️',
-    options: `
-      <div>
-        <span class="opt-label">// formato de saída</span>
-        <select class="opt-select" id="opt-b64fmt">
-          <option value="dataurl">Data URL (data:image/...;base64,...)</option>
-          <option value="raw">Só a string Base64</option>
-        </select>
-      </div>
-    `
-  }
-};
-
-// ── UI helpers ──────────────────────────────────────────
-function showToast(msg, isError = false) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'toast show' + (isError ? ' error' : '');
-  setTimeout(() => { t.className = 'toast'; }, 3000);
-}
-
-function setProgress(pct) {
-  const bar = document.getElementById('progress-bar');
-  const fill = document.getElementById('progress-fill');
-  bar.classList.toggle('visible', pct > 0 && pct < 100);
-  fill.style.width = pct + '%';
-}
-
-function fmtSize(bytes) {
-  if (bytes < 1024) return bytes + ' B';
-  if (bytes < 1048576) return (bytes/1024).toFixed(1) + ' KB';
-  return (bytes/1048576).toFixed(1) + ' MB';
-}
-
-function setResult(text, blob, filename) {
-  const box = document.getElementById('result-box');
-  const prev = document.getElementById('result-preview');
-  const dl = document.getElementById('btn-download');
-
-  const preview = typeof text === 'string' ? text.slice(0, 2000) + (text.length > 2000 ? '\n\n[... truncado para prévia]' : '') : '[arquivo binário — clique para baixar]';
-  prev.textContent = preview;
-
-  const url = URL.createObjectURL(blob);
-  dl.href = url;
-  dl.download = filename;
-  box.classList.add('visible');
-}
-
-// ── selecionar conversão ────────────────────────────────
-document.getElementById('grid').addEventListener('click', e => {
-  const card = e.target.closest('.conv-card');
-  if (!card) return;
-  const id = card.dataset.id;
-  selectConv(id);
-  document.getElementById('workspace').scrollIntoView({ behavior: 'smooth' });
-});
-
-function selectConv(id) {
-  currentConv = id;
-  selectedFile = null;
-
-  document.querySelectorAll('.conv-card').forEach(c =>
-    c.classList.toggle('active', c.dataset.id === id));
-
-  const cfg = configs[id];
-  document.getElementById('ws-title').textContent = cfg.title;
-  document.getElementById('file-input').accept = cfg.accept;
-  document.getElementById('accept-hint').textContent = cfg.hint;
-  document.getElementById('options-row').innerHTML = cfg.options;
-
-  document.getElementById('file-info').classList.remove('visible');
-  document.getElementById('btn-convert').disabled = true;
-  document.getElementById('result-box').classList.remove('visible');
-  setProgress(0);
-
-  document.getElementById('workspace').classList.add('visible');
-}
-
-// ── drag & drop ─────────────────────────────────────────
-const dz = document.getElementById('dropzone');
-dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
-dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
-dz.addEventListener('drop', e => {
-  e.preventDefault();
-  dz.classList.remove('drag-over');
-  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-});
-
-document.getElementById('file-input').addEventListener('change', e => {
-  if (e.target.files.length) handleFile(e.target.files[0]);
-});
-
-function handleFile(file) {
-  selectedFile = file;
-  const info = document.getElementById('file-info');
-  document.getElementById('fi-name').textContent = file.name;
-  document.getElementById('fi-size').textContent = fmtSize(file.size);
-  document.getElementById('fi-icon').textContent = configs[currentConv]?.icon || '📄';
-  info.classList.add('visible');
-  document.getElementById('btn-convert').disabled = false;
-  document.getElementById('result-box').classList.remove('visible');
-}
-
-// ── converter ───────────────────────────────────────────
-document.getElementById('btn-convert').addEventListener('click', async () => {
-  if (!selectedFile || !currentConv) return;
-  const btn = document.getElementById('btn-convert');
-  btn.disabled = true;
-  btn.innerHTML = '<span>⏳</span> Convertendo...';
-  setProgress(30);
-
-  try {
-    await converters[currentConv](selectedFile);
-    setProgress(100);
-    showToast('✓ Conversão concluída!');
-  } catch (err) {
-    showToast('Erro: ' + err.message, true);
-    console.error(err);
-    setProgress(0);
-  }
-
-  btn.disabled = false;
-  btn.innerHTML = '<span>⚙</span> Converter';
-});
-
-// ── converters ──────────────────────────────────────────
-const converters = {
-
-  // TXT → PDF
-  async txt2pdf(file) {
-    const text = await file.text();
-    const fontSize = parseInt(document.getElementById('opt-fontsize')?.value || 12);
-    const title = document.getElementById('opt-title')?.value || file.name.replace('.txt','');
-
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    const margin = 20;
-    const pageW = 210 - margin * 2;
-    const pageH = 297 - margin * 2;
-    const lineH = fontSize * 0.45;
-
-    doc.setFontSize(fontSize);
-    doc.setFont('helvetica', 'normal');
-
-    if (title) {
-      doc.setFontSize(fontSize + 4);
-      doc.setFont('helvetica', 'bold');
-      doc.text(title, margin, margin);
-      doc.setFontSize(fontSize);
-      doc.setFont('helvetica', 'normal');
-    }
-
-    const lines = doc.splitTextToSize(text, pageW);
-    let y = title ? margin + 14 : margin;
-
-    lines.forEach(line => {
-      if (y + lineH > 297 - margin) {
-        doc.addPage();
-        y = margin;
-      }
-      doc.text(line, margin, y);
-      y += lineH;
-    });
-
-    const out = doc.output('blob');
-    setResult(text, out, file.name.replace(/\.txt$/i, '') + '.pdf');
-  },
-
-  // IMG → PDF
-  async img2pdf(file) {
-    const { jsPDF } = window.jspdf;
-    const url = URL.createObjectURL(file);
-    const img = await new Promise((res, rej) => {
-      const i = new Image();
-      i.onload = () => res(i);
-      i.onerror = rej;
-      i.src = url;
-    });
-
-    const orient = document.getElementById('opt-orient')?.value;
-    const isLandscape = orient === 'l' || (orient === 'auto' && img.width > img.height);
-
-    const doc = new jsPDF({
-      orientation: isLandscape ? 'l' : 'p',
-      unit: 'mm',
-      format: 'a4'
-    });
-
-    const pW = isLandscape ? 297 : 210;
-    const pH = isLandscape ? 210 : 297;
-    const margin = 10;
-    const maxW = pW - margin * 2;
-    const maxH = pH - margin * 2;
-
-    const ratio = Math.min(maxW / img.width, maxH / img.height);
-    const w = img.width * ratio;
-    const h = img.height * ratio;
-    const x = margin + (maxW - w) / 2;
-    const y = margin + (maxH - h) / 2;
-
-    const canvas = document.createElement('canvas');
-    canvas.width = img.width;
-    canvas.height = img.height;
-    canvas.getContext('2d').drawImage(img, 0, 0);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-
-    const ext = file.type === 'image/png' ? 'PNG' : 'JPEG';
-    doc.addImage(dataUrl, ext, x, y, w, h);
-
-    const out = doc.output('blob');
-    setResult('[imagem convertida para PDF]', out, file.name.replace(/\.(jpg|jpeg|png|webp)$/i, '') + '.pdf');
-  },
-
-  // PDF → TXT
-  async pdf2txt(file) {
-    const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    let fullText = '';
-
-    for (let i = 1; i <= pdf.numPages; i++) {
-      setProgress(Math.round((i / pdf.numPages) * 90));
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      const pageText = content.items.map(item => item.str).join(' ');
-      fullText += `--- Página ${i} ---\n${pageText}\n\n`;
-    }
-
-    const blob = new Blob([fullText], { type: 'text/plain' });
-    setResult(fullText, blob, file.name.replace(/\.pdf$/i, '') + '.txt');
-  },
-
-  // JSON → CSV
-  async json2csv(file) {
-    const text = await file.text();
-    const data = JSON.parse(text);
-    if (!Array.isArray(data)) throw new Error('O JSON precisa ser um array de objetos');
-
-    const sep = document.getElementById('opt-sep')?.value || ',';
-    const headers = [...new Set(data.flatMap(obj => Object.keys(obj)))];
-    const escape = val => {
-      const s = val == null ? '' : String(val);
-      return s.includes(sep) || s.includes('"') || s.includes('\n')
-        ? `"${s.replace(/"/g, '""')}"` : s;
-    };
-
-    const rows = [
-      headers.map(escape).join(sep),
-      ...data.map(row => headers.map(h => escape(row[h])).join(sep))
-    ];
-    const csv = rows.join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    setResult(csv, blob, file.name.replace(/\.json$/i, '') + '.csv');
-  },
-
-  // CSV → JSON
-  async csv2json(file) {
-    const text = await file.text();
-    const sep = document.getElementById('opt-sep')?.value || ',';
-    const lines = text.trim().split('\n');
-    const headers = lines[0].split(sep).map(h => h.trim().replace(/^"|"$/g, ''));
-
-    const data = lines.slice(1).map(line => {
-      const vals = line.split(sep).map(v => v.trim().replace(/^"|"$/g, ''));
-      return Object.fromEntries(headers.map((h, i) => [h, vals[i] ?? '']));
-    });
-
-    const json = JSON.stringify(data, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    setResult(json, blob, file.name.replace(/\.csv$/i, '') + '.json');
-  },
-
-  // MD → HTML
-  async md2html(file) {
-    const md = await file.text();
-    const withStyles = document.getElementById('opt-styles')?.value === 'yes';
-
-    // parser MD básico mas funcional
-    let html = md
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-      .replace(/^#{6}\s(.+)/gm, '<h6>$1</h6>')
-      .replace(/^#{5}\s(.+)/gm, '<h5>$1</h5>')
-      .replace(/^#{4}\s(.+)/gm, '<h4>$1</h4>')
-      .replace(/^#{3}\s(.+)/gm, '<h3>$1</h3>')
-      .replace(/^#{2}\s(.+)/gm, '<h2>$1</h2>')
-      .replace(/^#{1}\s(.+)/gm, '<h1>$1</h1>')
-      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.+?)\*/g, '<em>$1</em>')
-      .replace(/`(.+?)`/g, '<code>$1</code>')
-      .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2">$1</a>')
-      .replace(/^[-*]\s(.+)/gm, '<li>$1</li>')
-      .replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
-      .replace(/^\d+\.\s(.+)/gm, '<li>$1</li>')
-      .replace(/^---$/gm, '<hr/>')
-      .replace(/\n\n/g, '</p><p>')
-      .replace(/\n/g, '<br/>');
-
-    html = '<p>' + html + '</p>';
-
-    let output;
-    if (withStyles) {
-      output = `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>${file.name.replace(/\.(md|markdown)$/i,'')}</title>
-<style>
-  body{font-family:Georgia,serif;max-width:780px;margin:40px auto;padding:0 20px;line-height:1.7;color:#222;}
-  h1,h2,h3{font-weight:700;margin-top:1.5em;} h1{font-size:2rem;} h2{font-size:1.5rem;} h3{font-size:1.2rem;}
-  code{background:#f4f4f4;padding:2px 6px;border-radius:3px;font-family:monospace;}
-  a{color:#0066cc;} hr{border:none;border-top:1px solid #ddd;margin:2em 0;}
-  ul{padding-left:1.5em;} li{margin:.3em 0;}
-</style>
-</head>
-<body>
-${html}
-</body>
-</html>`;
-    } else {
-      output = html;
-    }
-
-    const blob = new Blob([output], { type: 'text/html' });
-    setResult(output, blob, file.name.replace(/\.(md|markdown)$/i,'') + '.html');
-  },
-
-  // HTML → TXT
-  async html2txt(file) {
-    const html = await file.text();
-    const div = document.createElement('div');
-    div.innerHTML = html;
-
-    // remove scripts e styles
-    div.querySelectorAll('script,style,noscript').forEach(el => el.remove());
-
-    const text = div.innerText || div.textContent || '';
-    const clean = text.replace(/\n{3,}/g, '\n\n').trim();
-
-    const blob = new Blob([clean], { type: 'text/plain' });
-    setResult(clean, blob, file.name.replace(/\.(html|htm)$/i,'') + '.txt');
-  },
-
-  // IMG → BASE64
-  async img2base64(file) {
-    const fmt = document.getElementById('opt-b64fmt')?.value || 'dataurl';
-    const dataUrl = await new Promise((res, rej) => {
-      const r = new FileReader();
-      r.onload = () => res(r.result);
-      r.onerror = rej;
-      r.readAsDataURL(file);
-    });
-
-    const output = fmt === 'raw' ? dataUrl.split(',')[1] : dataUrl;
-    const blob = new Blob([output], { type: 'text/plain' });
-    setResult(output, blob, file.name + '.base64.txt');
-  }
-};
-</script>
+<script src="assets/js/formats.js"></script>
+<script src="assets/js/vendor.js"></script>
+<script src="assets/js/converters.js"></script>
+<script src="assets/js/app.js"></script>
 </body>
 </html>

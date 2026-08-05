@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+
+# macOS / Xcode
+macos/build/
+macos/*.xcodeproj/project.xcworkspace/
+macos/*.xcodeproj/xcuserdata/
+macos/ConvrtVideo/Resources/ffmpeg
+macos/ConvrtVideo/Resources/ffprobe
+DerivedData/
+*.xcuserstate
